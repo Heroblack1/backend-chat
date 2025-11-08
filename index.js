@@ -12,7 +12,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: ["https://hchat-y379.vercel.app"], // ✅ correct domain
+    origin: ["https://hchat-y379.vercel.app"],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })

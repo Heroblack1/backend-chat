@@ -33,212 +33,215 @@ oauth2Client.setCredentials({
   refresh_token: process.env.REFRESH_TOKEN,
 });
 
-// nodemailer inititialization
-// nodemailer inititialization
-// nodemailer inititialization
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    type: "OAuth2",
-    user: process.env.AUTH_EMAIL,
-    clientId: process.env.CLIENT_ID,
-    clientSecret: process.env.CLIENT_SECRET,
-    refreshToken: process.env.REFRESH_TOKEN,
-  },
-});
+// // nodemailer inititialization
+// // nodemailer inititialization
+// // nodemailer inititialization
+// const transporter = nodemailer.createTransport({
+//   service: "gmail",
+//   auth: {
+//     type: "OAuth2",
+//     user: process.env.AUTH_EMAIL,
+//     clientId: process.env.CLIENT_ID,
+//     clientSecret: process.env.CLIENT_SECRET,
+//     refreshToken: process.env.REFRESH_TOKEN,
+//   },
+// });
 
-transporter.verify((error, success) => {
-  if (error) {
-    console.log("❌ Transporter Error:", error);
-  } else {
-    console.log("✅ Gmail transporter ready");
-  }
-});
+// transporter.verify((error, success) => {
+//   if (error) {
+//     console.log("❌ Transporter Error:", error);
+//   } else {
+//     console.log("✅ Gmail transporter ready");
+//   }
+// });
 
 // email verification function
 // email verification function
 // email verification function
-const setVerificationEmail = ({ _id, email }, res) => {
-  const currentUrl = "https://backend-chat-0085.onrender.com/";
-  const uniqueString = uuidv4() + _id;
-  const mailOptions = {
-    from: process.env.AUTH_EMAIL,
-    to: email,
-    subject: "Verify Your Email",
-    html: `<P>Verify your email address to complete the signup and login into your account.<p>This link expires in <b>6 hours</b> </p></p>
-          <p>click <a href=${
-            currentUrl + "home/verify" + "/" + _id + "/" + uniqueString
-          }>here</a> to proceed.</p>`,
-  };
+// const setVerificationEmail = ({ _id, email }, res) => {
+//   const currentUrl = "https://backend-chat-0085.onrender.com/";
+//   const uniqueString = uuidv4() + _id;
+//   const mailOptions = {
+//     from: process.env.AUTH_EMAIL,
+//     to: email,
+//     subject: "Verify Your Email",
+//     html: `<P>Verify your email address to complete the signup and login into your account.<p>This link expires in <b>6 hours</b> </p></p>
+//           <p>click <a href=${
+//             currentUrl + "home/verify" + "/" + _id + "/" + uniqueString
+//           }>here</a> to proceed.</p>`,
+//   };
 
-  //hashing the unique string
-  const saltRounds = 10;
-  bcrypt
-    .hash(uniqueString, saltRounds)
-    .then((hashedUniqueString) => {
-      //set values to the new user verification model
-      const newVerification = new userVerificationModel({
-        userId: _id,
-        uniqueString: hashedUniqueString,
-        createdAt: Date.now(),
-        expiry: Date.now() + 21600000,
-      });
-      newVerification
-        .save()
-        .then(() => {
-          transporter
-            .sendMail(mailOptions)
-            .then(() => {
-              res.json({
-                status: "Almost a verified user",
-                message: "A verification message has been sent to your email",
-              });
-              console.log("email sent");
-            })
-            .catch((error) => {
-              console.log(error);
-              res.json({
-                status: "pending",
-                message: "email verification failed",
-              });
-            });
-        })
-        .catch((error) => {
-          console.log(error);
-          res.json({
-            status: "FAILED",
-            message: "could not save verification email data",
-          });
-        });
-    })
-    .catch((err) => {
-      console.log(err);
+//hashing the unique string
+//   const saltRounds = 10;
+//   bcrypt
+//     .hash(uniqueString, saltRounds)
+//     .then((hashedUniqueString) => {
+//       //set values to the new user verification model
+//       const newVerification = new userVerificationModel({
+//         userId: _id,
+//         uniqueString: hashedUniqueString,
+//         createdAt: Date.now(),
+//         expiry: Date.now() + 21600000,
+//       });
+//       newVerification
+//         .save()
+//         .then(() => {
+//           transporter
+//             .sendMail(mailOptions)
+//             .then(() => {
+//               res.json({
+//                 status: "Almost a verified user",
+//                 message: "A verification message has been sent to your email",
+//               });
+//               console.log("email sent");
+//             })
+//             .catch((error) => {
+//               console.log(error);
+//               res.json({
+//                 status: "pending",
+//                 message: "email verification failed",
+//               });
+//             });
+//         })
+//         .catch((error) => {
+//           console.log(error);
+//           res.json({
+//             status: "FAILED",
+//             message: "could not save verification email data",
+//           });
+//         });
+//     })
+//     .catch((err) => {
+//       console.log(err);
 
-      res.json({
-        status: "FAILED",
-        message: "An error occured while hashing email data",
-      });
-    });
-};
+//       res.json({
+//         status: "FAILED",
+//         message: "An error occured while hashing email data",
+//       });
+//     });
+// };
 
 // verify email function
 // verify email function
 // verify email function
-const verifyEmail = (req, res) => {
-  let { userId, uniqueString } = req.params;
+// const verifyEmail = (req, res) => {
+//   let { userId, uniqueString } = req.params;
 
-  userVerificationModel
-    .find({ userId })
-    .then((result) => {
-      if (result.length > 0) {
-        const expiry = result[0];
-        const hashedUniqueString = result[0].uniqueString;
-        if (expiry < Date.now()) {
-          userVerificationModel
-            .deleteOne({ userId })
-            .then((result) => {
-              user
-                .deleteOne({ _id: userId })
-                .then(() => {
-                  console.log("link has expired. sign up again");
-                  res.send("link has expired. sign up again");
-                })
-                .catch((error) => {
-                  console.log("clearing user with expired unique id failed");
-                  res.send("clearing user with expired unique id failed");
-                });
-            })
-            .catch((error) => {
-              console.log(error);
-              console.log("error occured while checking for verified user");
-              res.send("error occured while checking for verified user");
-            });
-        } else {
-          bcrypt
-            .compare(uniqueString, hashedUniqueString)
-            .then((result) => {
-              if (result) {
-                userModel
-                  .updateOne({ _id: userId }, { verified: true })
-                  .then(() => {
-                    userVerificationModel
-                      .deleteOne({ userId })
-                      .then(() => {
-                        console.log("verification successful");
-                        res.redirect(
-                          "https://hchat-y379.vercel.app/getStarted/successOrFail/Your%20account%20has%20been%20successfully%20verified.%20You%20can%20now%20Login"
-                        );
-                      })
-                      .catch((error) => {
-                        console.log(error);
-                        console.log(
-                          "an error occured while finalizing verification"
-                        );
-                        res.send(
-                          "an error occured while finalizing verification"
-                        );
-                      });
-                  })
-                  .catch((error) => {
-                    console.log(error);
-                    console.log("an error occured while updating user record");
-                    res.send("an error occured while updating user record");
-                  });
-              } else {
-                console.log(
-                  "invalid verification details passed. check your inbox"
-                );
-                res.send(
-                  "invalid verification details passed. check your inbox"
-                );
-              }
-            })
-            .catch((err) => {
-              console.log(err);
+//   userVerificationModel
+//     .find({ userId })
+//     .then((result) => {
+//       if (result.length > 0) {
+//         const expiry = result[0];
+//         const hashedUniqueString = result[0].uniqueString;
+//         if (expiry < Date.now()) {
+//           userVerificationModel
+//             .deleteOne({ userId })
+//             .then((result) => {
+//               user
+//                 .deleteOne({ _id: userId })
+//                 .then(() => {
+//                   console.log("link has expired. sign up again");
+//                   res.send("link has expired. sign up again");
+//                 })
+//                 .catch((error) => {
+//                   console.log("clearing user with expired unique id failed");
+//                   res.send("clearing user with expired unique id failed");
+//                 });
+//             })
+//             .catch((error) => {
+//               console.log(error);
+//               console.log("error occured while checking for verified user");
+//               res.send("error occured while checking for verified user");
+//             });
+//         } else {
+//           bcrypt
+//             .compare(uniqueString, hashedUniqueString)
+//             .then((result) => {
+//               if (result) {
+//                 userModel
+//                   .updateOne({ _id: userId }, { verified: true })
+//                   .then(() => {
+//                     userVerificationModel
+//                       .deleteOne({ userId })
+//                       .then(() => {
+//                         console.log("verification successful");
+//                         res.redirect(
+//                           "https://hchat-y379.vercel.app/getStarted/successOrFail/Your%20account%20has%20been%20successfully%20verified.%20You%20can%20now%20Login"
+//                         );
+//                       })
+//                       .catch((error) => {
+//                         console.log(error);
+//                         console.log(
+//                           "an error occured while finalizing verification"
+//                         );
+//                         res.send(
+//                           "an error occured while finalizing verification"
+//                         );
+//                       });
+//                   })
+//                   .catch((error) => {
+//                     console.log(error);
+//                     console.log("an error occured while updating user record");
+//                     res.send("an error occured while updating user record");
+//                   });
+//               } else {
+//                 console.log(
+//                   "invalid verification details passed. check your inbox"
+//                 );
+//                 res.send(
+//                   "invalid verification details passed. check your inbox"
+//                 );
+//               }
+//             })
+//             .catch((err) => {
+//               console.log(err);
 
-              console.log(
-                "an error occured while comparing the unique strings"
-              );
-              res.send("an error occured while comparing the unique strings");
-            });
-        }
-      } else {
-        console.log(
-          "account no exist or you have been verified already. please signup or login"
-        );
-        res.send(
-          "account no exist or you have been verified already. please signup or login"
-        );
-      }
-    })
-    .catch((error) => {
-      console.log(error);
-      res.send("an error occured while checking for verified user");
-    });
-};
+//               console.log(
+//                 "an error occured while comparing the unique strings"
+//               );
+//               res.send("an error occured while comparing the unique strings");
+//             });
+//         }
+//       } else {
+//         console.log(
+//           "account no exist or you have been verified already. please signup or login"
+//         );
+//         res.send(
+//           "account no exist or you have been verified already. please signup or login"
+//         );
+//       }
+//     })
+//     .catch((error) => {
+//       console.log(error);
+//       res.send("an error occured while checking for verified user");
+//     });
+// };
 // signup function
 // signup function
 // signup function
-const signUp = async (req, response) => {
+const signUp = async (req, res) => {
   try {
     const existingUser = await userModel.findOne({ email: req.body.email });
     if (existingUser) {
-      console.log("User already exists");
-      response.json({
+      return res.json({
         status: "FAILED",
         message: "User already exists. Please login",
       });
-    } else {
-      req.body.verified = false;
-      console.log(req.body);
-      let user = new userModel(req.body);
-      user.save().then((result) => {
-        setVerificationEmail(result, response);
-      });
     }
+
+    // Automatically mark user as verified
+    req.body.verified = true;
+
+    const newUser = new userModel(req.body);
+    await newUser.save();
+
+    res.json({
+      status: "SUCCESS",
+      message: "Account created successfully. You can now log in.",
+    });
   } catch (err) {
-    console.log(err);
-    response.json({
+    console.error(err);
+    res.json({
       status: "FAILED",
       message: "An error occurred while signing up",
     });
@@ -247,40 +250,30 @@ const signUp = async (req, response) => {
 
 // login function
 // login function
-// login function
-// login function
+
 const login = async (req, res) => {
   try {
-    console.log(req.body);
     const user = await userModel.findOne({ email: req.body.email });
-    if (user) {
-      const isValidPassword = await user.validatePassword(req.body.password);
-      if (isValidPassword) {
-        if (user.verified) {
-          const token = jwt.sign({ userId: user._id }, "your-secret-key", {
-            expiresIn: "1h",
-          });
-          res.send({
-            message: "signed in successfully",
-            status: true,
-            token,
-          });
-          console.log(user);
-        } else {
-          res.send({ message: "Verify your account", status: false });
-          console.log("verify your account");
-        }
-      } else {
-        res.send({ message: "wrong password", status: false });
-        console.log("wrong password");
-      }
-    } else {
-      res.send({ message: "User does not exist", status: false });
-      console.log("user no exist");
+    if (!user) {
+      return res.send({ message: "User does not exist", status: false });
     }
+
+    const isValidPassword = await user.validatePassword(req.body.password);
+    if (!isValidPassword) {
+      return res.send({ message: "Wrong password", status: false });
+    }
+
+    const token = jwt.sign({ userId: user._id }, "your-secret-key", {
+      expiresIn: "1h",
+    });
+    res.send({
+      message: "Signed in successfully",
+      status: true,
+      token,
+    });
   } catch (err) {
-    res.send({ message: "server error", status: false });
-    console.log("server error");
+    console.error(err);
+    res.send({ message: "Server error", status: false });
   }
 };
 
@@ -296,15 +289,13 @@ const dashboard = async (req, res) => {
 // authentication function
 const authenticate = async (req, res, next) => {
   try {
-    const token = req.header("Authorization").replace("Bearer ", "");
+    const token = req.header("Authorization")?.replace("Bearer ", "");
     const decoded = jwt.verify(token, "your-secret-key");
     const user = await userModel.findById(decoded.userId);
-    if (!user) {
-      throw new Error();
-    }
+    if (!user) throw new Error();
     req.user = user;
     next();
-  } catch (err) {
+  } catch {
     res.status(401).send({ error: "Please authenticate" });
   }
 };

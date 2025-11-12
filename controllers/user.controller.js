@@ -532,8 +532,6 @@ const getStatuses = async (req, res) => {
 module.exports = {
   userReg,
   signUp,
-  setVerificationEmail,
-  verifyEmail,
   login,
   authenticate,
   dashboard,

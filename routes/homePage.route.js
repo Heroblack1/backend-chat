@@ -2,7 +2,6 @@ const express = require("express");
 const {
   userReg,
   signUp,
-  verifyEmail,
   login,
   authenticate,
   dashboard,
@@ -36,9 +35,5 @@ router.get("/dashboard/getStatuses", getStatuses);
 router.get("/dashboard/messages", getMessages);
 router.get("/dashboard/broadcastMessages", getBroadcastMessages);
 router.get("/dashboard/groupMessages", getGroupMessages);
-// veryfing email route
-// veryfing email routeget
-// veryfing email route
-router.get("/verify/:userId/:uniqueString", verifyEmail);
 
 module.exports = router;

@@ -264,4 +264,29 @@ io.on("connection", (socket) => {
       io.to(targetSocket).emit("webrtc-candidate", { candidate, from });
     }
   });
+
+  const onlineUsers = new Set();
+
+  io.on("connection", (socket) => {
+    socket.on("join", (userId) => {
+      socket.userId = userId;
+      onlineUsers.add(userId);
+
+      io.emit("updateUserStatus", {
+        userId,
+        status: "online",
+      });
+    });
+
+    socket.on("disconnect", () => {
+      if (socket.userId) {
+        onlineUsers.delete(socket.userId);
+
+        io.emit("updateUserStatus", {
+          userId: socket.userId,
+          status: "offline",
+        });
+      }
+    });
+  });
 });

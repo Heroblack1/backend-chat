@@ -1,4 +1,5 @@
-const { userModel } = require("../models/userModels");
+// const { userModel } = require("../models/userModels");
+const { userModel: User } = require("../models/userModels");
 const { groupModel } = require("../models/groupModels");
 const { statusModel } = require("../models/status");
 const Message = require("../models/chatModels");

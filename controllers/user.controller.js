@@ -1,5 +1,5 @@
 // const { userModel } = require("../models/userModels");
-const { userModel: User } = require("../models/userModels");
+const User = require("../models/userModels");
 const { groupModel } = require("../models/groupModels");
 const { statusModel } = require("../models/status");
 const Message = require("../models/chatModels");
@@ -222,7 +222,7 @@ oauth2Client.setCredentials({
 // signup function
 const signUp = async (req, res) => {
   try {
-    const existingUser = await userModel.findOne({ email: req.body.email });
+    const existingUser = await User.findOne({ email: req.body.email });
     if (existingUser) {
       return res.json({
         status: "FAILED",
@@ -233,7 +233,7 @@ const signUp = async (req, res) => {
     // Automatically mark user as verified
     req.body.verified = true;
 
-    const newUser = new userModel(req.body);
+    const newUser = new User(req.body);
     await newUser.save();
 
     res.json({
@@ -254,7 +254,7 @@ const signUp = async (req, res) => {
 
 const login = async (req, res) => {
   try {
-    const user = await user.findOne({ email: req.body.email });
+    const user = await User.findOne({ email: req.body.email });
     if (!user) {
       return res.send({ message: "User does not exist", status: false });
     }
@@ -292,7 +292,7 @@ const authenticate = async (req, res, next) => {
   try {
     const token = req.header("Authorization")?.replace("Bearer ", "");
     const decoded = jwt.verify(token, "your-secret-key");
-    const user = await userModel.findById(decoded.userId);
+    const user = await User.findById(decoded.userId);
     if (!user) throw new Error();
     req.user = user;
     next();
@@ -305,7 +305,7 @@ const authenticate = async (req, res, next) => {
 // getting all users from db
 // getting all users from db
 const getUsers = async (req, res) => {
-  const allUsers = await userModel.find();
+  const allUsers = await User.find();
   res.json(allUsers);
   console.log(allUsers);
 };

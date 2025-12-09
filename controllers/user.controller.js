@@ -413,14 +413,23 @@ const getMessages = async (req, res) => {
 };
 
 // getting users with last message
+const mongoose = require("mongoose");
 
 const getUsersWithLastMessage = async (req, res) => {
   try {
-    const { userId } = req.params; // STRING ✅
+    console.log("✅ HIT ROUTE");
+    console.log("PARAMS:", req.params);
+
+    const { userId } = req.params;
+
+    console.log("USER ID RECEIVED:", userId);
 
     if (!mongoose.Types.ObjectId.isValid(userId)) {
+      console.log("❌ INVALID USER ID FORMAT");
       return res.status(400).json({ message: "Invalid user ID" });
     }
+
+    console.log("✅ USER ID IS VALID");
 
     const users = await User.aggregate([
       {
@@ -429,7 +438,7 @@ const getUsersWithLastMessage = async (req, res) => {
       {
         $lookup: {
           from: "messages",
-          let: { otherUserId: { $toString: "$_id" } }, // ✅ convert ObjectId → String
+          let: { otherUserId: { $toString: "$_id" } },
           pipeline: [
             {
               $match: {
@@ -468,9 +477,13 @@ const getUsersWithLastMessage = async (req, res) => {
       },
     ]);
 
+    console.log("✅ USERS FETCHED:", users.length);
+
     res.json(users);
   } catch (err) {
-    console.error("FINAL AGGREGATION ERROR:", err);
+    console.error("🔥 FULL SERVER ERROR BELOW 🔥");
+    console.error(err); // ✅ THIS WILL SHOW TRUE ERROR IN RENDER LOGS
+
     res.status(500).json({
       message: "Server error",
       error: err.message,

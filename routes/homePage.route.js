@@ -26,7 +26,7 @@ router.get("/", userReg);
 router.post("/register", signUp);
 router.post("/login", login);
 router.get("/dashboard", authenticate, dashboard);
-router.get("/getUsers", getUsers);
+// router.get("/getUsers", getUsers);
 router.get("/getUsers/:userId", getUsersWithLastMessage);
 router.get("/getGroups", getGroups);
 router.get("/getBroadcasts", getBroadcasts);

@@ -254,7 +254,7 @@ const signUp = async (req, res) => {
 
 const login = async (req, res) => {
   try {
-    const user = await userModel.findOne({ email: req.body.email });
+    const user = await user.findOne({ email: req.body.email });
     if (!user) {
       return res.send({ message: "User does not exist", status: false });
     }

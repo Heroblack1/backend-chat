@@ -370,28 +370,103 @@ const newBroadcast = async (req, res) => {
   }
 };
 // getting user's messages from the database
+// const getMessages = async (req, res) => {
+//   try {
+//     const userId = req.query.userId;
+//     const recipientId = req.query.recipientId;
+//     // console.log(Fetching messages between ${userId} and ${recipientId});
+
+//     const messages = await Message.find({
+//       $or: [
+//         { senderId: userId, recipientId: recipientId },
+//         { senderId: recipientId, recipientId: userId },
+//       ],
+//     });
+//     // console.log(Messages: ${messages});
+
+//     if (messages.length === 0) {
+//       // console.log("No messages found");
+//     }
+
+//     res.json(messages);
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ message: "Error fetching messages" });
+//   }
+// };
 const getMessages = async (req, res) => {
   try {
-    const userId = req.query.userId;
-    const recipientId = req.query.recipientId;
-    // console.log(Fetching messages between ${userId} and ${recipientId});
+    const { userId, recipientId } = req.query;
 
     const messages = await Message.find({
       $or: [
         { senderId: userId, recipientId: recipientId },
         { senderId: recipientId, recipientId: userId },
       ],
-    });
-    // console.log(Messages: ${messages});
-
-    if (messages.length === 0) {
-      // console.log("No messages found");
-    }
+    }).sort({ time: 1 }); // ✅ OLD → NEW (chat order)
 
     res.json(messages);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Error fetching messages" });
+  }
+};
+
+// getting users with last message
+const getUsersWithLastMessage = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const users = await User.aggregate([
+      {
+        $match: { _id: { $ne: userId } },
+      },
+      {
+        $lookup: {
+          from: "messages",
+          let: { otherUserId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $or: [
+                    {
+                      $and: [
+                        { $eq: ["$senderId", "$$otherUserId"] },
+                        { $eq: ["$recipientId", userId] },
+                      ],
+                    },
+                    {
+                      $and: [
+                        { $eq: ["$senderId", userId] },
+                        { $eq: ["$recipientId", "$$otherUserId"] },
+                      ],
+                    },
+                  ],
+                },
+              },
+            },
+            { $sort: { time: -1 } },
+            { $limit: 1 },
+          ],
+          as: "lastMessage",
+        },
+      },
+      {
+        $unwind: {
+          path: "$lastMessage",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $sort: { "lastMessage.time": -1 },
+      },
+    ]);
+
+    res.json(users);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -545,4 +620,5 @@ module.exports = {
   getBroadcastMessages,
   newStatus,
   getStatuses,
+  getUsersWithLastMessage,
 };

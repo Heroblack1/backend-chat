@@ -15,6 +15,7 @@ const {
   getBroadcastMessages,
   newStatus,
   getStatuses,
+  getUsersWithLastMessage,
 } = require("../controllers/user.controller");
 const { v4: uuidv4 } = require("uuid");
 require("dotenv").config();
@@ -26,6 +27,7 @@ router.post("/register", signUp);
 router.post("/login", login);
 router.get("/dashboard", authenticate, dashboard);
 router.get("/getUsers", getUsers);
+router.get("/getUsersWithLastMessage", getUsersWithLastMessage);
 router.get("/getGroups", getGroups);
 router.get("/getBroadcasts", getBroadcasts);
 router.post("/dashboard/newGroup", newGroup);

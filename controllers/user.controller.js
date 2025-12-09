@@ -415,17 +415,23 @@ const getMessages = async (req, res) => {
 // getting users with last message
 const getUsersWithLastMessage = async (req, res) => {
   try {
-    const { userId } = req.params; // THIS IS A STRING ✅
+    const { userId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: "Invalid userId" });
+    }
+
+    const userObjectId = new mongoose.Types.ObjectId(userId);
 
     const users = await User.aggregate([
       {
-        $match: { _id: { $ne: new mongoose.Types.ObjectId(userId) } },
+        $match: { _id: { $ne: userObjectId } },
       },
       {
         $lookup: {
           from: "messages",
           let: {
-            otherUserId: { $toString: "$_id" }, // ✅ Convert ObjectId → String
+            otherUserId: { $toString: "$_id" },
           },
           pipeline: [
             {
@@ -467,10 +473,15 @@ const getUsersWithLastMessage = async (req, res) => {
 
     res.json(users);
   } catch (err) {
-    console.error("AGGREGATION ERROR:", err); // ✅ YOU WILL SEE REAL ERROR NOW
-    res.status(500).json({ message: "Server error", error: err.message });
+    console.error("AGGREGATION ERROR FULL:", err);
+    res.status(500).json({
+      message: "Server error",
+      error: err.message,
+      stack: err.stack, // ✅ TEMPORARY: shows exact crash
+    });
   }
 };
+
 // getting group's messages from the database
 const getGroupMessages = async (req, res) => {
   try {

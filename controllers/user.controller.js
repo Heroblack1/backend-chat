@@ -415,16 +415,18 @@ const getMessages = async (req, res) => {
 // getting users with last message
 const getUsersWithLastMessage = async (req, res) => {
   try {
-    const { userId } = req.params;
+    const { userId } = req.params; // THIS IS A STRING ✅
 
     const users = await User.aggregate([
       {
-        $match: { _id: { $ne: userId } },
+        $match: { _id: { $ne: new mongoose.Types.ObjectId(userId) } },
       },
       {
         $lookup: {
           from: "messages",
-          let: { otherUserId: "$_id" },
+          let: {
+            otherUserId: { $toString: "$_id" }, // ✅ Convert ObjectId → String
+          },
           pipeline: [
             {
               $match: {
@@ -465,11 +467,10 @@ const getUsersWithLastMessage = async (req, res) => {
 
     res.json(users);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
+    console.error("AGGREGATION ERROR:", err); // ✅ YOU WILL SEE REAL ERROR NOW
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 };
-
 // getting group's messages from the database
 const getGroupMessages = async (req, res) => {
   try {
